@@ -21,5 +21,13 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4.1.1
-      - uses: 030/trivyignore-validator@v0.1.0
+      - uses: 030/trivyignore-validator-action@v0.1.0
+```
+
+## unit tests
+
+```bash
+docker run -it -v "${PWD}:/code" --entrypoint=bash bats/bats:v1.10.0
+apk add --no-cache coreutils
+bats --tap test --print-output-on-failure
 ```
