@@ -13,21 +13,26 @@ createEmptyDotTrivyignoreIfAbsent() {
   exit 0
 }
 
-inspectCveExpiry() {
+inspectVulnerabilityExpiry() {
   echo "checking whether an expiry has been attached..."
 
-  if ! echo ${1} | grep -qE "^CVE\-.*exp:[0-9]{4}(\-[0-9]{2}){2}$"; then
+  if ! echo ${1} | grep -qE "^[A-Z]+\-.*exp:[0-9]{4}(\-[0-9]{2}){2}$"; then
     echo "no expiry associated to: '${1}'. Add it by adding: 'exp:yyyy-mm-dd'"
     exit 1
   fi
 }
 
-inspectCveExpiryMaxOneMonth() {
+inspectVulnerabilityExpiryMaxOneMonth() {
   echo "checking whether the expiry will take place in one month..."
-  current=$(echo "${1}" | sed -e "s|CVE\-.*exp:\(.*\)|\1|g")
+  current=$(echo "${1}" | sed -e "s|^[A-Z]\{3,\}\-.*exp:\(.*\)|\1|g")
+  if ! echo "${current}" | grep -qE "^[0-9]{4}(\-[0-9]{2}){2}$"; then
+    echo "extracted date: ${current} is invalid"
+    exit 1
+  fi
+
   max=$(date +"%F" --date="$(date +%F) next month")
 
-  if [[ "${current}" > "${max}" ]]; then
+  if [ "${current}" \> "${max}" ]; then
     echo "current date: '${current}' in line: '${1}' exceeds"
     echo "the maximum date of one month. Choose a new date that is"
     echo "before: ${max}"
@@ -35,20 +40,20 @@ inspectCveExpiryMaxOneMonth() {
   fi
 }
 
-inspectCveExpiryAndMaxOneMonth() {
+inspectVulnerabilityExpiryAndMaxOneMonth() {
   while read -r line; do
-    if echo "${line}" | grep -qE "^CVE\-"; then
-      echo "found a 'CVE-' entry in the ${filename}...";
+    if echo "${line}" | grep -qE "^[A-Z]+\-"; then
+      echo "found a vulnerability entry in the ${filename}...";
 
-      inspectCveExpiry "${line}"
-      inspectCveExpiryMaxOneMonth "${line}"
+      inspectVulnerabilityExpiry "${line}"
+      inspectVulnerabilityExpiryMaxOneMonth "${line}"
     fi
   done < "${filename}"
 }
 
 main() {
   createEmptyDotTrivyignoreIfAbsent
-  inspectCveExpiryAndMaxOneMonth
+  inspectVulnerabilityExpiryAndMaxOneMonth
 }
 
 main
